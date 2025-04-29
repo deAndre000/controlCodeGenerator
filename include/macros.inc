@@ -1,5 +1,5 @@
 
-%include "const.inc"
+%include "../include/const.inc"
 
 section .bss
 	buffer resb 21
@@ -80,7 +80,7 @@ section .bss
 	syscall
 %endmacro
 
-%macros exit_ 0
+%macro exit_ 0
 	mov rax, SYS_EXIT
 	xor rdi, rdi
 	syscall
