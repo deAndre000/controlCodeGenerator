@@ -3,15 +3,32 @@
 %include "../include/macros.inc"
 
 section .data
-	msg db "Hello World!", 0
-	msg_len equ ($ - msg)
+	digito_Verhoeff db 0	
+
+	num db "236", 0
+	
 	line db NEWLINE
 
+	msg db "DIGITO DE VERHOEFF: ", 0
+
+	msglen equ ($ - msg)
+		
 section .text
 	global _start
+	extern generateVerhoeff
 _start:
-	;print NEWLINE, 1
-	print msg, msg_len
+	mov rdi, num
+	
+	call generateVerhoeff
+
+	add eax, '0'	
+	
+	mov [digito_Verhoeff], al
+	
+	print msg, msglen
+
+	print digito_Verhoeff, 1	
+
 	print line, 1
 
 	exit_
