@@ -5,8 +5,8 @@
 section .data
 	digito_Verhoeff db 0	
 
-	num db "236", 0
-	
+	num db "1503", 0
+
 	line db NEWLINE
 
 	msg db "DIGITO DE VERHOEFF: ", 0

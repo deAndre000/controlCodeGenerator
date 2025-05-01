@@ -21,6 +21,7 @@
 
 section .text
 	global generateVerhoeff
+	extern strlen
 generateVerhoeff:
 	push rbp
 	mov rbp, rsp
@@ -29,17 +30,12 @@ generateVerhoeff:
 	push r13
 	push r14
 
-	xor eax, eax
+	call strlen
+	mov rcx, rax ;longitud de cadena
 	mov rbx, rdi ;Numero
-	xor rcx, rcx
+	
+	xor rax, rax
 
-; CALCULO DE CADENAS (MOVER A OP. CON CADENAS)
-.strlen_loop:
-	cmp byte [rbx + rcx], 0
-	je .strlen_done
-	inc rcx
-	jmp .strlen_loop
-.strlen_done:
 	test rcx, rcx
 	jz .done
 
