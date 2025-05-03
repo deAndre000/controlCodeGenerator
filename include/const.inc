@@ -1,4 +1,7 @@
 
+%ifndef CONST_INC
+%define CONST_INC
+
 ; =============================================
 ; CONSTANTES GENERALES DEL SISTEMA
 ; =============================================
@@ -25,22 +28,29 @@
 
 %define MAX_CODIGO_DE_CONTROL		10 
 
-%define FECHA_FORM		    "AAAAMMDD"
-
-%define CODIGO_FORM		"XX-XX-XX-XX-XX"
-
-%define SEPARADOR 		       '-'
-
 
 ; =============================================
 ; CONSTANTES PARA ALGORITMOS
 ; =============================================
 
+; Alleged RC4 -------------------------------
+
+section .rodata
+
+ 	RC4_STATE_SIZE	equ	256 
+	
+	struc RC4_State
+       		.S	resb	RC4_STATE_SIZE
+		.i	resb	1
+		.j	resb	1
+	endstruc
+
+
 ; Verhoeff ------------------------------------
 
-%define VERHOEFF_DIGITS 5 
+	;VERHOEFF_DIGITS equ 	5 
 
-%define D_TABLE \
+	D_TABLE:
 	db 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, \
 	   1, 2, 3, 4, 0, 6, 7, 8, 9, 5, \
        	   2, 3, 4, 0, 1, 7, 8, 9, 5, 6, \
@@ -52,10 +62,10 @@
        	   8, 7, 6, 5, 9, 3, 2, 1, 0, 4, \
        	   9, 8, 7, 6, 5, 4, 3, 2, 1, 0
 
-%define INV_TABLE \
+	INV_TABLE:
 	db 0, 4, 3, 2, 1, 5, 6, 7, 8, 9
 
-%define P_TABLE \
+	P_TABLE:
 	db 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, \
            1, 5, 7, 6, 2, 8, 3, 0, 9, 4, \
            5, 8, 0, 3, 7, 9, 6, 1, 4, 2, \
@@ -65,31 +75,34 @@
            2, 7, 9, 3, 8, 0, 6, 4, 1, 5, \
            7, 0, 4, 6, 9, 1, 3, 2, 5, 8
 
-
+ 
 ; Base64 ------------------------------------
 
-%define BASE64_DICT \
-	db 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
-	   'abcdefghijklmnopqrstuvwxyz' \
-	   '0123456789+/'
+	BASE64_DICT:
+	db	'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 
+	db 	'abcdefghijklmnopqrstuvwxyz' 
+	db 	'0123456789+/'
 
 
 
-%define BASE64_PAD	'='
+	BASE64_PAD: 
+	db		   	'='
 
 
+; =============================================
+; CONSTANTES DE CADENAS
+; =============================================
+	FECHA_FORMAT: 	
+	db		    "AAAAMMDD",0
+
+	CODIGO_FORMAT:	
+	db		"XX-XX-XX-XX-XX",0
+
+	SEPARADOR:      
+	db		       '-',0
 
 
-; Alleged RC4 -------------------------------
-
-
-%define RC4_STATE	256 
-
-
-
-
-
-
+%endif
 
 
 
