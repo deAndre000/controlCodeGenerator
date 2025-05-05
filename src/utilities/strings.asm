@@ -125,7 +125,61 @@ int_to_str:
     ret
 
 
+global concat_strings
 
+; ======================================
+; Args:
+;   rdi - primer str
+;   rsi - segundo str
+;   rdx - buffer de salida
+; Ret:
+;   rax - len total
+; ======================================
+concat_strings:
+    push rbp
+    mov rbp, rsp
+    push rbx                
+    push r12
+    push r13
+    
+    mov rbx, rdx           
+    xor r12, r12           
+    
+    ; Copiar primer str
+.copy_first:
+    mov al, [rdi]          
+    test al, al            
+    jz .copy_second         
+    
+    mov [rdx], al          
+    inc rdi                 
+    inc rdx
+    inc r12                
+    jmp .copy_first
+
+.copy_second:
+    ; Copiar 2do
+    mov al, [rsi]          
+    test al, al             
+    jz .done               
+    
+    mov [rdx], al           
+    inc rsi                
+    inc rdx
+    inc r12                 
+    jmp .copy_second
+
+.done:
+    mov byte [rdx], 0       ; terminador nulo
+    mov rax, r12            ;  len total
+    
+    pop r13                 
+    pop r12
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+
+    ret
 
 
 
