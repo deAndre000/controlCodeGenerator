@@ -28,7 +28,7 @@ strlen:
  
 	ret
 
-; ASCII a entero (base 10)
+	;============== ASCII a entero (base 10)
 ; Args:
 ;   rdi - puntero al str
 ; Ret:

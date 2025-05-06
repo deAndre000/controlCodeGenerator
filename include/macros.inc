@@ -20,19 +20,27 @@ section .bss
 %endmacro
 
 %macro newline_ 0
+	push rax
+	push rdi
 	mov rax, SYS_WRITE
 	mov rdi, STDOUT
 	mov rsi, NEWLINE
 	mov rdx, 1
 	syscall
+	pop rdi
+	pop rax
 %endmacro
 
 %macro print 2
+	push rax
+	push rdi
 	mov rax, SYS_WRITE
     	mov rdi, STDOUT
     	mov rsi, %1
     	mov rdx, %2
     	syscall
+	pop rdi
+	pop rax
 %endmacro
 
 %macro printd 1
