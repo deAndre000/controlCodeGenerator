@@ -8,6 +8,8 @@ section .data
 	fecha 		db 	"20070702", 0
 	monto 		db 	"2500", 0
 	
+	llave_dos	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
+
 	msg		db	"DIGITOS DE VERHOEFF: ", 0
 	msglen		equ	($ - msg - 1)
 
@@ -28,7 +30,7 @@ section .bss
 
 section .text  	
 	global _start
-	extern strlen, concat_strings, int_to_str, str_to_int
+	extern strlen, concat_strings, int_to_str, str_to_int, strcpy, copy_substring, int_to_string
 	extern generateVerhoeff, validateVerhoeff
 _start:
 	;mov qword [digit_count], 0 ;contador de digs de verhoeff
@@ -222,7 +224,7 @@ _start:
 
 verhoeff_loop:
 	cmp rcx, 5
-	jae _end
+	jae end_verhoeff_loop
 
 	mov rdi, buffer
 	call generateVerhoeff
@@ -238,12 +240,38 @@ verhoeff_loop:
 
 	jmp verhoeff_loop 
 
-_end:
+end_verhoeff_loop:
 	print buffer, rbx
 	print line, 1
 
-	print msg, msglen
-	print ver_digs, digit_count
+;	mov rdi, buffer
+;	mov rsi, 21
+
+;	call clr_buffer
+	call cln
+
+
+sum_verhoeff_d:
+;	cmp rcx, 5
+	mov rdi, llave_dos
+    	mov rsi, 1          ; Límite inferior (a)
+    	mov rdx, 5         ; Límite superior (b)
+    	mov rcx, buffer
+    	call copy_substring
+
+	; Verificar resultado
+;	test rax, rax
+;   	jz _end
+	
+	mov rbx, rax
+
+	print line, 1
+	print buffer, rbx
+	print line, 1 
+
+_end:
+;	print msg, msglen
+;	print ver_digs, digit_count
 	print line, 1
 
 
@@ -253,52 +281,32 @@ _err:
     	print line, 1
     	exit_
 
-sum_stack:
-	; =================================================
-	; SUMATORIA EN PILA
-	; RDI = cantidad de cadenas numericas 
-	; RSI = buffer para suma
-	; RAX = (resultado)
-	; solo funciona con nums de hasta 8 bytes
-	; =================================================
+; Función: clear_buffer
+; Limpia un buffer estableciendo todos sus bytes a 0
+; Parámetros:
+;   RDI = puntero al buffer a limpiar
+;   RSI = tamaño del buffer en bytes
 
-	push rbp
-    	mov rbp, rsp
-    	push rbx                
-    	push r12
-    	push r13
+clr_buffer:
+    push rbp
+    mov rbp, rsp
     
-    	mov r12, rdi           	; contador de strs
-    	xor r13, r13            
-    	lea rbx, [rbp + 40]     ; Apuntar a str1
-    
-.procesar_cadena:
-    	test r12, r12           
-    	jz .fin
-    
-    	mov rdi, [rbx]          ; puntero a cadena
-    	call str_to_int         ; str --> entero 
-    
-    	add r13, rax            ; sumatoria
+    ; Validación básica de parámetros
+    test rdi, rdi
+    jz .done_clr           ; Si el puntero es NULL, salir
+    test rsi, rsi
+    jz .done_clr           ; Si el tamaño es 0, salir
 
-	
+    ; Limpiar buffer
+    xor eax, eax       ; RAX = 0
+    mov rcx, rsi       ; Contador = tamaño del buffer
+    rep stosb          ; Almacenar AL (0) en [RDI], incrementando RDI, decrementando RCX hasta 0
 
-    	add rbx, 8
-    	dec r12       
-    	jmp .procesar_cadena
-    
-.fin:
-	
+.done_clr:
+    mov rsp, rbp
+    pop rbp
+    ret
 
-    	mov rax, r13 ; res
-    
-    	pop r13      
-    	pop r12
-    	pop rbx
-    	mov rsp, rbp
-    	pop rbp
-    	ret
-	
 save_verhoeff:
 	; =================================================
 	; ALMACENAR DIGITOS DE VERHOEFF Y AUMENTAR CONTADOR
@@ -318,86 +326,6 @@ save_verhoeff:
 	pop rdi
 
 	ret
-strcpy:
-	; ==============================================
-	; COPIA STRINGS
-	; Parámetros:
-	;   RSI = origen
-	;   RDI = destino
-	; ==============================================
-	push rax
-	push rcx
-	xor rcx, rcx
-	
-.copy_loop:
-	mov al, [rsi + rcx]
-	mov [rdi + rcx], al
-	test al, al
-	jz .done
-	inc rcx
-	jmp .copy_loop
-.done:
-	pop rcx
-	pop rax
-	ret
-
-
-; Parámetros:
-;   RDI = número entero (quadword) a convertir
-;   RSI = puntero al buffer de salida (debe tener al menos 21 bytes)
-; Retorno:
-;   RAX = longitud de la cadena (sin incluir NULL)
-
-int_to_string:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rdx
-    push r12        ; Usaremos R12 para guardar el puntero al buffer
-
-    mov rax, rdi    ; Número a convertir
-    mov r12, rsi    ; Guarda el puntero al buffer original
-    mov rbx, 10     ; Divisor (base 10)
-    xor rcx, rcx    ; Contador de dígitos (inicializado a 0)
-
-    ; Caso especial: RAX = 0
-    test rax, rax
-    jnz .convert_loop
-    mov byte [rsi], '0'
-    mov byte [rsi + 1], 0
-    mov rax, 1      ; Longitud = 1
-    jmp .done
-
-.convert_loop:
-    ; Extrae dígitos y los guarda en la pila (en orden inverso)
-    xor rdx, rdx    ; Limpia RDX para la división
-    div rbx         ; RDX:RAX / 10 → RAX=cociente, RDX=resto
-    add dl, '0'     ; Convierte dígito a ASCII
-    push rdx        ; Guarda en la pila
-    inc rcx         ; Incrementa contador de dígitos
-    test rax, rax   ; ¿Cociente = 0?
-    jnz .convert_loop
-
-    ; Copia dígitos desde la pila al buffer (en orden correcto)
-    mov rax, rcx    ; RAX = longitud de la cadena
-.copy_loop:
-    pop rdx
-    mov [r12], dl   ; Escribe dígito en el buffer
-    inc r12         ; Avanza el puntero
-    loop .copy_loop
-
-    ; Terminador NULL y retorno
-    mov byte [r12], 0
-    ; RAX ya contiene la longitud
-
-.done:
-    pop r12
-    pop rdx
-    pop rbx
-    mov rsp, rbp
-    pop rbp
-    ret
-
 cln:
 	xor rax, rax
 	xor rbx, rbx

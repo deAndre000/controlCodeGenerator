@@ -181,5 +181,148 @@ concat_strings:
 
     ret
 
+global strcpy
+strcpy:
+	; ==============================================
+	; COPIA STRINGS
+	; Parámetros:
+	;   RSI = origen
+	;   RDI = destino
+	; ==============================================
+	push rax
+	push rcx
+	xor rcx, rcx
+	
+.copy_loop:
+	mov al, [rsi + rcx]
+	mov [rdi + rcx], al
+	test al, al
+	jz .done
+	inc rcx
+	jmp .copy_loop
+.done:
+	pop rcx
+	pop rax
+	ret
 
+
+; ========================================================
+; Función: copy_substring
+; Copia un substring desde una cadena a un buffer
+; Parámetros:
+;   RDI = puntero al string de entrada (null-terminated)
+;   RSI = índice inicial (a) - basado en 0
+;   RDX = índice final (b) - inclusive
+;   RCX = puntero al buffer de salida (debe tener suficiente espacio)
+; Retorno:
+;   RAX = longitud del substring copiado (0 si hay error)
+global copy_substring
+copy_substring:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
+    push r13
+    push r14
+
+    ; Validar índices (a <= b)
+    cmp rsi, rdx
+    ja .error
+
+    ; Calcular longitud del string original
+    mov r12, rdi        ; Guardar puntero al string
+    call strlen
+    mov r13, rax        ; Longitud del string
+
+    ; Validar que b no excede la longitud
+    cmp rdx, r13
+    jae .error
+
+    ; Calcular longitud del substring
+    mov r14, rdx
+    sub r14, rsi        ; r14 = b - a
+    inc r14             ; r14 = (b - a) + 1 (longitud del substring)
+
+    ; Copiar substring
+    mov rdi, r12        ; String origen
+    add rdi, rsi        ; Posición inicial (a)
+    mov rsi, rcx        ; Buffer destino
+    mov rcx, r14        ; Longitud a copiar
+    rep movsb           ; Copiar RCX bytes
+
+    ; Añadir terminador nulo
+    mov byte [rsi], 0
+
+    ; Retornar longitud
+    mov rax, r14
+    jmp .done_
+
+.error:
+    xor rax, rax        ; Retornar 0 en caso de error
+
+.done_:
+    pop r14
+    pop r13
+    pop r12
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; ================================================================
+; Parámetros:
+;   RDI = número entero (quadword) a convertir
+;   RSI = puntero al buffer de salida (debe tener al menos 21 bytes)
+; Retorno:
+;   RAX = longitud de la cadena (sin incluir NULL)
+global int_to_string
+int_to_string:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rdx
+    push r12        ; Usaremos R12 para guardar el puntero al buffer
+
+    mov rax, rdi    ; Número a convertir
+    mov r12, rsi    ; Guarda el puntero al buffer original
+    mov rbx, 10     ; Divisor (base 10)
+    xor rcx, rcx    ; Contador de dígitos (inicializado a 0)
+
+    ; Caso especial: RAX = 0
+    test rax, rax
+    jnz .convert_loop
+    mov byte [rsi], '0'
+    mov byte [rsi + 1], 0
+    mov rax, 1      ; Longitud = 1
+    jmp .done_str
+
+.convert_loop:
+    ; Extrae dígitos y los guarda en la pila (en orden inverso)
+    xor rdx, rdx    ; Limpia RDX para la división
+    div rbx         ; RDX:RAX / 10 → RAX=cociente, RDX=resto
+    add dl, '0'     ; Convierte dígito a ASCII
+    push rdx        ; Guarda en la pila
+    inc rcx         ; Incrementa contador de dígitos
+    test rax, rax   ; ¿Cociente = 0?
+    jnz .convert_loop
+
+    ; Copia dígitos desde la pila al buffer (en orden correcto)
+    mov rax, rcx    ; RAX = longitud de la cadena
+.copy_loop:
+    pop rdx
+    mov [r12], dl   ; Escribe dígito en el buffer
+    inc r12         ; Avanza el puntero
+    loop .copy_loop
+
+    ; Terminador NULL y retorno
+    mov byte [r12], 0
+    ; RAX ya contiene la longitud
+
+.done_str:
+    pop r12
+    pop rdx
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
 
