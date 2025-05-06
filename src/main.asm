@@ -8,7 +8,7 @@ section .data
 	fecha 		db 	"20070702", 0
 	monto 		db 	"2500", 0
 	
-	llave_dos	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
+	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
 
 	msg		db	"DIGITOS DE VERHOEFF: ", 0
 	msglen		equ	($ - msg - 1)
@@ -102,10 +102,6 @@ _start:
 	mov byte [buffer + rcx + 1], 0
 	inc rcx
 
-;	lea rdi, [rsp + 8] 
-;	mov rsi, buffer
-;	call strcpy ; guardar cadena
-
 	print buffer, rcx 
 	print line, 1
 	
@@ -143,10 +139,6 @@ _start:
 	mov byte [buffer + rcx], al
 	mov byte [buffer + rcx + 1], 0
 	inc rcx
-
-;	lea rdi, [rsp + 8]
-;	mov rsi, buffer
-;	call strcpy ; guardar cadena
 
 	print buffer, rcx 
 	print line, 1
@@ -186,10 +178,6 @@ _start:
 	mov byte [buffer + rcx + 1], 0
 	inc rcx
 
-;	lea rdi, [rsp + 8]
-;	mov rsi, buffer
-;	call strcpy ; guardar cadena
-
 	print buffer, rcx 
 	print line, 1
 		
@@ -219,6 +207,7 @@ _start:
 	;	    5 DIGITOS
 	; ================================
 	; rbx = tamano del string en el buffer sin contar el terminador null
+	
 	mov rdi, buffer
 	xor rcx, rcx
 
@@ -241,8 +230,8 @@ verhoeff_loop:
 	jmp verhoeff_loop 
 
 end_verhoeff_loop:
-	print buffer, rbx
-	print line, 1
+;	print buffer, rbx
+;	print line, 1
 
 ;	mov rdi, buffer
 ;	mov rsi, 21
@@ -282,8 +271,8 @@ _err:
     	exit_
 
 ; Función: clear_buffer
-; Limpia un buffer estableciendo todos sus bytes a 0
-; Parámetros:
+; Limpiador buffer
+; args:
 ;   RDI = puntero al buffer a limpiar
 ;   RSI = tamaño del buffer en bytes
 
@@ -291,7 +280,6 @@ clr_buffer:
     push rbp
     mov rbp, rsp
     
-    ; Validación básica de parámetros
     test rdi, rdi
     jz .done_clr           ; Si el puntero es NULL, salir
     test rsi, rsi

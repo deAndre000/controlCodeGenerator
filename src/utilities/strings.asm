@@ -161,7 +161,7 @@ concat_strings:
     ; Copiar 2do
     mov al, [rsi]          
     test al, al             
-    jz .done               
+    jz .copy_done               
     
     mov [rdx], al           
     inc rsi                
@@ -169,7 +169,7 @@ concat_strings:
     inc r12                 
     jmp .copy_second
 
-.done:
+.copy_done:
     mov byte [rdx], 0       ; terminador nulo
     mov rax, r12            ;  len total
     
