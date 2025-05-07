@@ -2,6 +2,9 @@
 %include "../include/const.inc"
 %include "../include/macros.inc"
 
+%define FIRST_HALF(index)  [buffer + (index)*8]
+%define SECOND_HALF(index) [buffer + (11 + (index))*8]
+
 section .data
 	; ================================================================
 	;			DATOS DE FACTURACION
@@ -16,19 +19,22 @@ section .data
 
 	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
 	
+	DIGS_POR_DATO	equ		2	
+
+	DIGS_SUMATORIA	equ		5
 	; ================================================================
 	;			MENSAJES DE CONTROL
 	; ================================================================
-	msg		db	"DIGITOS DE VERHOEFF: ", 0
+	msg		db	"DIGITOS DE VERHOEFF: "	, 	0
 	msglen		equ	($ - msg - 1)
 	
-	msg2		db	"CONTENIDO: ", 0	
+	msg2		db	"CONTENIDO: "		,	0	
 	msg2len		equ	($ - msg2 - 1)	
 
-	msg3		db	"ITERACION: "
+	msg3		db	"ITERACION: "		,	0
 	msg3len		equ	($ - msg3 - 1)
 
-	err_msg		db	"-- ERROR --", 0
+	err_msg		db	"-- ERROR --"		, 	0
 	err_msglen	equ	($ - err_msg - 1)
 
 	dig_verhoeff	db	0
@@ -38,9 +44,13 @@ section .data
 	; ================================================================
 	;		      BUFFERS - CONTENEDORES
 	; ================================================================
-	buffer times 21 db 	0
+	buffer times 21 dq 	0
+
+	;llave de cifrado 
 
 	sum_total	dq	0
+
+	
 
 section .bss
 	ver_digs 	resb 	32
@@ -48,8 +58,9 @@ section .bss
 
 section .text  	
 	global _start
-	extern strlen, str_to_int, strcpy, copy_substring, int_to_string
 	extern generateVerhoeff, validateVerhoeff
+	extern strlen, str_to_int, strcpy, copy_substring, int_to_string
+
 _start:
 gen_verhoeff:	
 	mov rsi, data
@@ -71,7 +82,7 @@ gen_verhoeff:
 	push rbx
 	
 .digits_loop:
-	cmp rcx, 2		;2 DIGITOS DE VERHOEFF
+	cmp rcx, DIGS_POR_DATO
 	jae .sum
 	
 	call generateVerhoeff
@@ -116,6 +127,7 @@ gen_verhoeff:
 	mov rbx, rax
 	print buffer, rbx
 	print line, 1
+	print line, 1
 
 	; GENERAR 5 DIGITOS DE VERHOEFF SOBRE LA SUMA
 
@@ -124,8 +136,8 @@ gen_verhoeff:
 	xor rcx, rcx
 
 .verhoeff_sum_loop:
-	cmp rcx, 5
-	jae _end
+	cmp rcx, DIGS_SUMATORIA
+	jae .end_of_loop
 
 	;mov rdi, buffer
 	call generateVerhoeff
@@ -141,8 +153,62 @@ gen_verhoeff:
 
 	jmp .verhoeff_sum_loop 	
 
-_end:
+.end_of_loop:
+	;IMPRIMIR DATOS	
+	print msg2, msg2len
+	print line, 1
 	print buffer, rbx
+	print line, 1
+	print line, 1
+	call cln_all	
+
+
+
+mov r8, [digit_count] 
+
+.extract_substrings:
+	mov rdi, llave_dosif
+	mov rcx, buffer
+
+	mov al, [ver_digs + rbx] 
+	sub al, '0'
+	inc al
+
+	movzx rax, al
+	add rdx, rax
+
+	push rdx
+	call substring_buf
+	pop rdx
+
+	
+
+	mov rsi, rdx
+	inc rbx
+
+	;CONTROL DE DATOS (IMPRIMIR SUBSTRINGS)
+	push rbx
+	mov rbx, rax
+	print msg3, msg3len 
+	print line, 1
+	print buffer, rbx
+	print line, 1
+	pop rbx	
+
+
+	
+
+
+	;CONCATENAR CADENAS 
+	;mov qword SECOND_HALF(0)
+	
+
+	dec r8
+	jnz .extract_substrings
+		
+_end:
+;	mov rbx, rax
+;	print buffer, rbx
 	print line, 1
 	exit_
 _err:	    
@@ -152,7 +218,63 @@ _err:
 
 
 
+; Función substring_buf
+; Parámetros:
+;   rdi - cadena de entrada
+;   rsi - índice inferior
+;   rdx - índice superior
+;   rcx - buffer de salida
+; Retorno:
+;   rax - longitud del substring
+substring_buf:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
 
+    ; Validar índices
+    cmp rsi, rdx
+    jge .invalid_range
+    cmp rdx, 0
+    jl .invalid_range
+
+    ; Calcular longitud de la cadena original
+    mov r12, rdi
+    call strlen
+    cmp rdx, rax
+    jg .invalid_range
+
+    ; Calcular longitud del substring
+    mov rax, rdx
+    sub rax, rsi
+
+    ; Copiar el substring
+    mov rbx, rcx        ; rbx = buffer de salida
+    lea rsi, [r12 + rsi] ; rsi = inicio del substring
+    mov rcx, rax        ; rcx = contador
+
+.copy_loop:
+    mov dl, [rsi]
+    mov [rbx], dl
+    inc rsi
+    inc rbx
+    loop .copy_loop
+
+    ; Añadir null-terminator (opcional)
+    mov byte [rbx], 0
+
+    ; Retornar longitud
+    jmp .done
+
+.invalid_range:
+    xor rax, rax        ; Retornar longitud 0 para indicar error
+
+.done:
+    pop r12
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
 
 
 ; Función: clear_buffer
@@ -216,6 +338,15 @@ pop_all:
 	pop rcx
 	pop rbx
 	pop rax
+	ret
+
+cln_all:
+	xor rax, rax
+        xor rbx, rbx
+        xor rcx, rcx
+        xor rdx, rdx
+        xor rsi, rsi
+	xor rdi, rdi
 	ret
 
 cln:
