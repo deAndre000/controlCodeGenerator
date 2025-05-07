@@ -3,23 +3,41 @@
 %include "../include/macros.inc"
 
 section .data
-	num_de_factura	db 	"1503", 0
-	nit 		db 	"4189179011", 0
-	fecha 		db 	"20070702", 0
-	monto 		db 	"2500", 0
+	; ================================================================
+	;			DATOS DE FACTURACION
+	; ================================================================
+	data:
+		db 	"1503", 	0		; NUMERO DE FACTURA
+		db 	"4189179011", 	0		; NIT
+		db 	"20070702", 	0		; FECHA
+		db 	"2500", 	0		; MONTO
 	
-	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
+	datalen 	equ		4	
 
+	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
+	
+	; ================================================================
+	;			MENSAJES DE CONTROL
+	; ================================================================
 	msg		db	"DIGITOS DE VERHOEFF: ", 0
 	msglen		equ	($ - msg - 1)
+	
+	msg2		db	"CONTENIDO: ", 0	
+	msg2len		equ	($ - msg2 - 1)	
+
+	msg3		db	"ITERACION: "
+	msg3len		equ	($ - msg3 - 1)
 
 	err_msg		db	"-- ERROR --", 0
-	err_msglen	equ	($ - msg - 1)
+	err_msglen	equ	($ - err_msg - 1)
 
 	dig_verhoeff	db	0
 
 	line 		db	NEWLINE
-
+	
+	; ================================================================
+	;		      BUFFERS - CONTENEDORES
+	; ================================================================
 	buffer times 21 db 	0
 
 	sum_total	dq	0
@@ -30,196 +48,90 @@ section .bss
 
 section .text  	
 	global _start
-	extern strlen, concat_strings, int_to_str, str_to_int, strcpy, copy_substring, int_to_string
+	extern strlen, str_to_int, strcpy, copy_substring, int_to_string
 	extern generateVerhoeff, validateVerhoeff
 _start:
-	;mov qword [digit_count], 0 ;contador de digs de verhoeff
+gen_verhoeff:	
+	mov rsi, data
+	mov r8, datalen
 
+.process_loop:	
+	mov rdi, rsi
+	call strlen
+	mov rbx, rax	
 
-	; ================================
-	;	VERHOEFF EN FACTURA
-	;	    2 DIGITOS
-	; ================================
-	mov rsi, num_de_factura
-	lea rdi,[buffer]
+	print rsi, rbx
+
+	lea rdi, [buffer]
 	call strcpy
 	
 	mov rdi, buffer
-	call strlen
-	mov rcx, rax
-
-	mov rdi, num_de_factura
-	call generateVerhoeff
-	add eax, '0'
+	xor rcx, rcx
+	push r8
+	push rbx
 	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
+.digits_loop:
+	cmp rcx, 2		;2 DIGITOS DE VERHOEFF
+	jae .sum
 	
-	mov rdi, buffer
 	call generateVerhoeff
 	add eax, '0'	
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
+
+	mov [dig_verhoeff], al
+
+	mov byte [buffer + rbx], al
+	mov byte [buffer + rbx + 1], 0
+
+	push rcx
+	print dig_verhoeff, 1
+	pop rcx	
+
+	inc rbx
 	inc rcx
 
-	print buffer, rcx 
+	jmp .digits_loop 
+
+.sum:	
 	print line, 1
-	
-	mov rdi, buffer
-	call str_to_int
-
-	mov [sum_total], rax
-	
-	call cln
-
-	; ================================
-	;	VERHOEFF EN NIT
-	;	    2 DIGITOS
-	; ================================
-	mov rsi, nit
-	lea rdi,[buffer]
-	call strcpy
-	
-	mov rdi, buffer
-	call strlen
-	mov rcx, rax
-
-	mov rdi, nit
-	call generateVerhoeff
-	add eax, '0'
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
-	
-	mov rdi, buffer
-	call generateVerhoeff
-	add eax, '0'	
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
-
-	print buffer, rcx 
-	print line, 1
-	
+	pop rbx
+	pop r8
 	mov rdi, buffer
 	call str_to_int
 
 	add [sum_total], rax
-	
-	call cln
 
-	; ================================
-	;	VERHOEFF EN FECHA
-	;	    2 DIGITOS
-	; ================================
-	mov rsi, fecha
-	lea rdi,[buffer]
-	call strcpy
+	add rsi, rbx
+	add rsi, 1
+	dec r8
 	
-	mov rdi, buffer
-	call strlen
-	mov rcx, rax
+	jnz .process_loop
 
-	mov rdi, fecha
-	call generateVerhoeff
-	add eax, '0'
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
-	
-	mov rdi, buffer
-	call generateVerhoeff
-	add eax, '0'	
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
+	; IMPRIMIR SUMA
 
-	print buffer, rcx 
-	print line, 1
-
-	mov rdi, buffer
-	call str_to_int
-
-	add [sum_total], rax
-	
-	call cln
-
-	; ================================
-	;	VERHOEFF EN MONTO
-	;	    2 DIGITOS
-	; ================================
-	mov rsi, monto
-	lea rdi,[buffer]
-	call strcpy
-	
-	mov rdi, buffer
-	call strlen
-	mov rcx, rax
-
-	mov rdi, monto
-	call generateVerhoeff
-	add eax, '0'
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
-	
-	mov rdi, buffer
-	call generateVerhoeff
-	add eax, '0'	
-	
-	mov byte [buffer + rcx], al
-	mov byte [buffer + rcx + 1], 0
-	inc rcx
-
-	print buffer, rcx 
-	print line, 1
-		
-	mov rdi, buffer
-	call str_to_int
-
-	add [sum_total], rax
-	
-	call cln
-
-	; ============================
-	; 	 IMPRIMIR RES
-	; ============================
-		
 	mov rdi, [sum_total]
 	mov rsi, buffer
 
 	call int_to_string
 
 	mov rbx, rax
-
-	print buffer, rbx ; Sumatoria
+	print buffer, rbx
 	print line, 1
-	
-	; ================================
-	;	VERHOEFF EN SUMA TOT
-	;	    5 DIGITOS
-	; ================================
-	; rbx = tamano del string en el buffer sin contar el terminador null
-	
+
+	; GENERAR 5 DIGITOS DE VERHOEFF SOBRE LA SUMA
+
+	mov qword [digit_count], 0 	;INICIAR CONTADOR DE DIGITOS DE VERHOEFF
 	mov rdi, buffer
 	xor rcx, rcx
 
-verhoeff_loop:
+.verhoeff_sum_loop:
 	cmp rcx, 5
-	jae end_verhoeff_loop
+	jae _end
 
-	mov rdi, buffer
+	;mov rdi, buffer
 	call generateVerhoeff
 	add eax, '0'
 
-	call save_verhoeff
+	call save_verhoeff		;GUARDAR DIGITO DE VERHOEFF
 
 	mov byte [buffer + rbx], al
 	mov byte [buffer + rbx + 1], 0
@@ -227,48 +139,21 @@ verhoeff_loop:
 	inc rbx
 	inc rcx
 
-	jmp verhoeff_loop 
-
-end_verhoeff_loop:
-;	print buffer, rbx
-;	print line, 1
-
-;	mov rdi, buffer
-;	mov rsi, 21
-
-;	call clr_buffer
-	call cln
-
-
-sum_verhoeff_d:
-;	cmp rcx, 5
-	mov rdi, llave_dos
-    	mov rsi, 1          ; Límite inferior (a)
-    	mov rdx, 5         ; Límite superior (b)
-    	mov rcx, buffer
-    	call copy_substring
-
-	; Verificar resultado
-;	test rax, rax
-;   	jz _end
-	
-	mov rbx, rax
-
-	print line, 1
-	print buffer, rbx
-	print line, 1 
+	jmp .verhoeff_sum_loop 	
 
 _end:
-;	print msg, msglen
-;	print ver_digs, digit_count
+	print buffer, rbx
 	print line, 1
-
-
 	exit_
 _err:	    
 	print err_msg, err_msglen
     	print line, 1
     	exit_
+
+
+
+
+
 
 ; Función: clear_buffer
 ; Limpiador buffer
@@ -314,6 +199,25 @@ save_verhoeff:
 	pop rdi
 
 	ret
+
+push_all:
+	push rax
+	push rbx
+	push rcx
+	push rdx
+	push rdi
+	push rsi
+	ret
+
+pop_all:
+	pop rsi
+	pop rdi
+	pop rdx
+	pop rcx
+	pop rbx
+	pop rax
+	ret
+
 cln:
 	xor rax, rax
 	xor rbx, rbx

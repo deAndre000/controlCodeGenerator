@@ -22,25 +22,31 @@ section .bss
 %macro newline_ 0
 	push rax
 	push rdi
+	push rsi
 	mov rax, SYS_WRITE
 	mov rdi, STDOUT
 	mov rsi, NEWLINE
 	mov rdx, 1
 	syscall
+	pop rsi
 	pop rdi
 	pop rax
 %endmacro
 
 %macro print 2
-	push rax
-	push rdi
-	mov rax, SYS_WRITE
-    	mov rdi, STDOUT
-    	mov rsi, %1
-    	mov rdx, %2
-    	syscall
-	pop rdi
-	pop rax
+    push rax            ; Preservamos registros que modificamos
+    push rdi
+    push rsi
+    push rdx
+    mov rax, 1          ; SYS_WRITE
+    mov rdi, 1          ; STDOUT
+    mov rsi, %1         ; Buffer
+    mov rdx, %2         ; Longitud
+    syscall
+    pop rdx             ; Restauramos registros
+    pop rsi
+    pop rdi
+    pop rax
 %endmacro
 
 %macro printd 1
