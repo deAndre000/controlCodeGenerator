@@ -45,12 +45,14 @@ section .data
 	; ================================================================
 	;		      BUFFERS - CONTENEDORES
 	; ================================================================
-	buffer times 21 dq 	0
+	buffer 		times 21 	dq 	0
 		
-	sum_total	dq	0
+	sum_total			dq	0
 	
-	str_c times 10  dq	0
+	str_c 		times 10  	dq	0
 	
+	key_cif 	times 10 	dq	0
+
 
 section .bss
 	ver_digs 	resb 	5
@@ -349,6 +351,38 @@ lea rsi, SECOND_HALF(0)
 	print str_c, rcx
 	print line, 1
 
+call cln_all
+
+	; ================================================================
+        ;         		    ALGORITMO RC4
+        ; ================================================================
+
+mov rdi, buffer
+mov rsi, 168
+call clr_buffer
+
+rc4:
+	; LLAVE PARA CIFRADO
+	lea rdi, [key_cif]	
+	mov rsi, llave_dosif
+	call strcpy
+	call strlen
+
+	mov rbx, [digit_count]
+	mov rsi, ver_digs 
+	mov byte [rsi + rbx], 0
+	
+	mov rbx, rax
+
+	add rdi, rbx
+	call strcpy
+	call strlen
+
+	add rax, rbx
+	
+	; IMPRESION DE CONTROL
+	print line, 1	
+	print key_cif, rax	
 
 	; ================================================================
         ;         		       SALIDA
