@@ -277,44 +277,40 @@ call cln_all
 ; ===========================
 ;      EXTRAER SUBSTRINGS
 ; ===========================
-
 mov r8, datalen
-lea rsi, SECOND_HALF(0);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+lea rsi, SECOND_HALF(0)
 
 .extract_substrings:
 	push rbx
-	push rdx
-
+	
 	mov rdi, rsi
-
         call strlen
 	mov rbx, rax
 
         lea rdi, [buffer]
         call strcpy
 
+	; IMPRESION DE CONTROL
 	print buffer, rbx	
 	print line, 1
 	
 	add rsi, rbx
 	add rsi, 1
 	
-	pop rdx
 	pop rbx
 
+
 	push rsi;-----------------------------------
-	
 
 	mov rdi, llave_dosif
-
+	
 	mov rcx, buffer	
 	add rcx, rax
-
 	push rax
 	
 	mov rsi, rdx
-	xor rax, rax
 
+	xor rax, rax
 	mov al, [ver_digs + rbx] 
 	sub al, '0'
 	inc al
