@@ -67,10 +67,8 @@ section .text
 _start:
 
 call cln_all
-
 gen_verhoeff:
 	lea rdx, SECOND_HALF(0)
-	
 
 	push rdi
 	
@@ -80,7 +78,7 @@ gen_verhoeff:
 	call strlen
 	
 	mov rdi, rdx
-	call strcpy;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	call strcpy
 
 	add rdx, rax
 	add rdx, 1
@@ -147,21 +145,14 @@ print line, 1
 ; GUARDAR CADENAS CON DIGITOS ----------------------
 push rsi 
 	mov rdi, rdx
-	;add rdi, rdx 	
 	
-		
 	mov rsi, buffer 
 	call strcpy
-
-	;lea rdi, SECOND_HALF(0)
 	call strlen
 
 	mov rbx, rax
 
-;	mov rdi, buffer
-;	lea rsi, SECOND_HALF(0)
-;	call strcpy
-
+	; IMPRESION DE CONTROL
 	print msg3, msg3len
 	print line, 1
 	print buffer, rbx
@@ -213,7 +204,6 @@ push rsi
 ; ===========================
 ;    5 DIGITOS DE VERHOEFF
 ; ===========================
-
 .verhoeff_sum_loop:
 	cmp rcx, DIGS_SUMATORIA
 	jae .end_of_loop
@@ -241,14 +231,12 @@ push rsi
 	print line, 1
 	call cln_all	
 
-; ===========================
-;    IMPRESION DE CONTROL
-; ===========================
-mov rcx, datalen
-;dec rcx
-xor rbx, rbx
+ 
 
+; IMPRESION DE CONTROL
+mov rcx, datalen
 lea rsi, SECOND_HALF(0)
+
 .control_loop:
 	add rsi, rbx
 	mov rdi, buffer
@@ -275,35 +263,41 @@ call cln_all
 
 
 ; ===========================
-;      EXTRAER SUBSTRINGS
+;     LOOP DE SUBSTRING 
+;  CON DIGITOS DE VERHOEFF
 ; ===========================
 mov r8, datalen
 lea rsi, SECOND_HALF(0)
 
 .extract_substrings:
+; -------------------------------;
+; CARGAR EN BUFFER IZQUIERDO STR ;
+; GUARDADO EN BUFFER DERECHO     ;
+; -------------------------------;
 	push rbx
-	
+
 	mov rdi, rsi
         call strlen
-	mov rbx, rax
 
         lea rdi, [buffer]
-        call strcpy
+        add rdi, rcx
+	call strcpy
 
-	; IMPRESION DE CONTROL
-	print buffer, rbx	
-	print line, 1
-	
-	add rsi, rbx
+	add rsi, rax
 	add rsi, 1
 	
+	add rax, rcx 
+
 	pop rbx
 
-
-	push rsi;-----------------------------------
+; ------------------------------------------;
+; EXTRAER SUBSTRING CON DIGITOS DE VERHOEFF ;
+; Y CONCATENAR CON STR CARGADO EN BUFER IZQ ;
+; ------------------------------------------;
+	push rsi
 
 	mov rdi, llave_dosif
-	
+
 	mov rcx, buffer	
 	add rcx, rax
 	push rax
@@ -325,21 +319,22 @@ lea rsi, SECOND_HALF(0)
 	inc rbx
 
 	pop rcx
-	add rax, rcx
+	inc rcx
+	add rcx, rax
 
-	; IMPRESION DE CONTROL
-	push rbx
-	mov rbx, rax
-	print buffer, rbx
-	print line, 1
-	print line, 1
-	pop rbx	
-
-	pop rsi ;---------------------------------
+	pop rsi 
 
 	dec r8
 	jnz .extract_substrings
 	
+; ======== FIN DE LOOP ======== 
+
+	;IMPRESION DE CONTROL
+	dec rcx
+	print buffer, rcx
+	print line, 1
+
+
 _end:
 	print line, 1
 	exit_
@@ -362,6 +357,7 @@ substring_buf:
     push rbp
     mov rbp, rsp
     push rbx
+    push rcx
     push r12
 
     ; Validar índices
@@ -403,6 +399,7 @@ substring_buf:
 
 .done:
     pop r12
+    pop rcx
     pop rbx
     mov rsp, rbp
     pop rbp
