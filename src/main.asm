@@ -70,6 +70,8 @@ call cln_all
 
 gen_verhoeff:
 	lea rdx, SECOND_HALF(0)
+	
+
 	push rdi
 	
 	mov rsi, data
@@ -77,6 +79,12 @@ gen_verhoeff:
 	
 	call strlen
 	
+	mov rdi, rdx
+	call strcpy;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+	add rdx, rax
+	add rdx, 1
+
 	add rsi, rax
 	add rsi, 1
 
@@ -237,7 +245,7 @@ push rsi
 ;    IMPRESION DE CONTROL
 ; ===========================
 mov rcx, datalen
-dec rcx
+;dec rcx
 xor rbx, rbx
 
 lea rsi, SECOND_HALF(0)
@@ -271,7 +279,7 @@ call cln_all
 ; ===========================
 
 mov r8, datalen
-mov rsi, data
+lea rsi, SECOND_HALF(0);;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .extract_substrings:
 	push rbx
