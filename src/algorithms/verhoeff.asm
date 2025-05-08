@@ -29,6 +29,7 @@ generateVerhoeff:
 	mov rbp, rsp
 	push rbx
 	push rcx
+	push rdx
 	push r12
 	push r13
 	push r14
@@ -72,6 +73,7 @@ generateVerhoeff:
 	pop r14
     	pop r13
     	pop r12
+	pop rdx
 	pop rcx
     	pop rbx
     	pop rbp

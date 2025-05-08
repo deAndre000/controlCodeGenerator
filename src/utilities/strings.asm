@@ -35,6 +35,8 @@ strlen:
 ;   rax - valor numérico
 
 global str_to_int
+push rcx
+push rdx
 str_to_int:
     xor rax, rax          
     xor rcx, rcx         
@@ -64,6 +66,9 @@ str_to_int:
     ret
 
 .done:
+    pop rdx
+    pop rcx
+
     ret
 
 ; entero a str ASCII (base 10)

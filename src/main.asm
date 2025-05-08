@@ -40,8 +40,6 @@ section .data
 
 	dig_verhoeff	db	0
 
-	chainlen	db	0
-
 	line 		db	NEWLINE
 	
 	; ================================================================
@@ -69,14 +67,16 @@ gen_verhoeff:
 	mov rsi, data
 	mov rdi, rsi
 	
-	call strlen
+	call strlen 				; no afecta a rdx
 	
 	add rsi, rax
 	add rsi, 1
 
 	mov r8, datalen
 	dec r8
-
+; ====================================
+; 	INICIO DEL LOOP PRINCIPAL
+; ====================================
 .process_loop:	
 	mov rdi, rsi
 	call strlen
@@ -85,18 +85,22 @@ gen_verhoeff:
 	print rsi, rbx
 
 	lea rdi, [buffer]
-	call strcpy
+	call strcpy				; no afecta a rdx
 	
 	mov rdi, buffer
 	xor rcx, rcx
 	push r8
 	push rbx
-	
+
+; ====================================
+; 	  INICIO DE SUB LOOP 
+;        2 DIGITOS DE VERHOEFF
+; ====================================	
 .digits_loop:
 	cmp rcx, DIGS_POR_DATO
 	jae .sum
 	
-	call generateVerhoeff
+	call generateVerhoeff			; talvez afecta a rdx
 	add eax, '0'	
 
 	mov [dig_verhoeff], al
@@ -113,23 +117,28 @@ gen_verhoeff:
 
 	jmp .digits_loop 
 
+; ====================================
+;    SUMATORIA DE DATOS CON DIGITO
+; ====================================
 .sum:	
 	print line, 1
 	pop rbx
 	pop r8
 	mov rdi, buffer
-	call str_to_int
+	call str_to_int			; podria afectar rdx
 
 	add [sum_total], rax
 
 	add rsi, rbx
 	add rsi, 1
-	dec r8
 	
+
+	dec r8
 	jnz .process_loop
 
-	; IMPRIMIR SUMA
+; ===== FIN DE LOOP PRINCIPAL =====
 
+	; IMPRIMIR SUMA (CONTROL)
 	mov rdi, [sum_total]
 	mov rsi, buffer
 
@@ -140,9 +149,12 @@ gen_verhoeff:
 	print line, 1
 	print line, 1
 
-	; GENERAR 5 DIGITOS DE VERHOEFF SOBRE LA SUMA
 
-	mov qword [digit_count], 0 	;INICIAR CONTADOR DE DIGITOS DE VERHOEFF
+; ====================================
+;      LOOP - 5 DIGITOS VERHOEFF
+; ====================================
+;INICIAR CONTADOR DE DIGITOS DE VERHOEFF
+	mov qword [digit_count], 0 
 	mov rdi, buffer
 	xor rcx, rcx
 
@@ -175,72 +187,6 @@ gen_verhoeff:
 
 
 
-mov r8, datalen
-mov rsi, data
-
-.extract_substrings:
-	push rbx
-	push rdx
-
-	mov rdi, rsi
-
-        call strlen
-	mov rbx, rax
-
-        lea rdi, [buffer]
-        call strcpy
-
-	print buffer, rbx	
-	print line, 1
-	
-	add rsi, rbx
-	add rsi, 1
-	
-	pop rdx
-	pop rbx
-
-	push rsi;-----------------------------------
-	
-
-	mov rdi, llave_dosif
-
-	mov rcx, buffer	
-	add rcx, rax
-
-	push rax
-	
-	mov rsi, rdx
-	xor rax, rax
-
-	mov al, [ver_digs + rbx] 
-	sub al, '0'
-	inc al
-
-	movzx rax, al
-	add rdx, rax
-
-	push rdx
-	call substring_buf
-	pop rdx
-
-	inc rbx
-
-	pop rcx
-	add rax, rcx
-
-	; IMPRESION DE CONTROL
-	push rbx
-	mov rbx, rax
-	print buffer, rbx
-	print line, 1
-	print line, 1
-	pop rbx	
-
-	pop rsi ;---------------------------------
-
-	dec r8
-	jnz .extract_substrings
-	
 _end:
 	print line, 1
 	exit_
