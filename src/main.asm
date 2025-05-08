@@ -9,13 +9,14 @@ section .data
 	; ================================================================
 	;			DATOS DE FACTURACION
 	; ================================================================
-	data:
+	data:	
+		db	"29040011007",	0		; NUMERO DE AUTORIZACION
 		db 	"1503", 	0		; NUMERO DE FACTURA
 		db 	"4189179011", 	0		; NIT
 		db 	"20070702", 	0		; FECHA
 		db 	"2500", 	0		; MONTO
 	
-	datalen 	equ		4	
+	datalen 	equ		5	
 
 	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
 	
@@ -38,6 +39,8 @@ section .data
 	err_msglen	equ	($ - err_msg - 1)
 
 	dig_verhoeff	db	0
+
+	chainlen	db	0
 
 	line 		db	NEWLINE
 	
@@ -64,7 +67,15 @@ section .text
 _start:
 gen_verhoeff:	
 	mov rsi, data
+	mov rdi, rsi
+	
+	call strlen
+	
+	add rsi, rax
+	add rsi, 1
+
 	mov r8, datalen
+	dec r8
 
 .process_loop:	
 	mov rdi, rsi
@@ -164,11 +175,42 @@ gen_verhoeff:
 
 
 
-mov r8, [digit_count] 
+mov r8, datalen
+mov rsi, data
 
 .extract_substrings:
+	push rbx
+	push rdx
+
+	mov rdi, rsi
+
+        call strlen
+	mov rbx, rax
+
+        lea rdi, [buffer]
+        call strcpy
+
+	print buffer, rbx	
+	print line, 1
+	
+	add rsi, rbx
+	add rsi, 1
+	
+	pop rdx
+	pop rbx
+
+	push rsi;-----------------------------------
+	
+
 	mov rdi, llave_dosif
-	mov rcx, buffer
+
+	mov rcx, buffer	
+	add rcx, rax
+
+	push rax
+	
+	mov rsi, rdx
+	xor rax, rax
 
 	mov al, [ver_digs + rbx] 
 	sub al, '0'
@@ -181,34 +223,25 @@ mov r8, [digit_count]
 	call substring_buf
 	pop rdx
 
-	
-
-	mov rsi, rdx
 	inc rbx
 
-	;CONTROL DE DATOS (IMPRIMIR SUBSTRINGS)
+	pop rcx
+	add rax, rcx
+
+	; IMPRESION DE CONTROL
 	push rbx
 	mov rbx, rax
-	print msg3, msg3len 
-	print line, 1
 	print buffer, rbx
+	print line, 1
 	print line, 1
 	pop rbx	
 
-
-	
-
-
-	;CONCATENAR CADENAS 
-	;mov qword SECOND_HALF(0)
-	
+	pop rsi ;---------------------------------
 
 	dec r8
 	jnz .extract_substrings
-		
+	
 _end:
-;	mov rbx, rax
-;	print buffer, rbx
 	print line, 1
 	exit_
 _err:	    
