@@ -62,11 +62,15 @@ section .bss
 section .text  	
 	global _start
 	extern generateVerhoeff, validateVerhoeff
-	extern strlen, str_to_int, strcpy, copy_substring, int_to_string
+	extern strlen, str_to_int, strcpy, int_to_string, substring_buf
 
 _start:
-
 call cln_all
+
+       ; ===============================================================
+       ;              GENERAR 2 DIGITOS VERHOEFF POR DATO
+       ; ===============================================================
+
 gen_verhoeff:
 	lea rdx, SECOND_HALF(0)
 
@@ -89,9 +93,9 @@ gen_verhoeff:
 	mov r8, datalen
 	dec r8
 
-; ===========================
-;	LOOP PRINCIPAL
-; ===========================
+; -------------------------------;
+; 	  LOOP PRINCIPAL	 ;
+; -------------------------------;
 .process_loop:	
 	mov rdi, rsi
 	call strlen
@@ -107,9 +111,9 @@ gen_verhoeff:
 	push r8
 	push rbx
 
-; ===========================
-;      LOOP DE 2 DIGITOS 
-; ===========================	
+; ----------------------------------------;
+; LOOP GENERADOR DE 2 DIGITOS DE VERHOEFF ;
+; ----------------------------------------;
 .digits_loop:
 	cmp rcx, DIGS_POR_DATO
 	jae .sum
@@ -132,15 +136,14 @@ gen_verhoeff:
 
 	jmp .digits_loop 
 
-; ===========================
-;     SUMATORIA DE DATOS
-; ===========================
+; -------------------------------;
+;       SUMATORIA DE DATOS	 ;    
+; -------------------------------;
 .sum:
+	mov rdi, buffer
+	call strlen
 
-mov rdi, buffer
-call strlen
-
-print line, 1
+	print line, 1
  
 ; GUARDAR CADENAS CON DIGITOS ----------------------
 push rsi 
@@ -201,9 +204,11 @@ push rsi
 	mov rdi, buffer
 	xor rcx, rcx
 
-; ===========================
-;    5 DIGITOS DE VERHOEFF
-; ===========================
+
+	; ================================================================
+        ;         GENERAR 5 DIGITOS DE VERHOEFF SOBRE LA SUMATORIA
+        ; ================================================================
+
 .verhoeff_sum_loop:
 	cmp rcx, DIGS_SUMATORIA
 	jae .end_of_loop
@@ -262,10 +267,11 @@ print line, 1
 call cln_all
 
 
-; ===========================
-;     LOOP DE SUBSTRING 
-;  CON DIGITOS DE VERHOEFF
-; ===========================
+	; ================================================================
+        ;            LOOP DE SUBSTRING Y CONCATENACION DE 
+	;                DATOS CON DIGITOS DE VERHOEFF
+        ; ================================================================
+
 mov r8, datalen
 lea rsi, SECOND_HALF(0)
 
@@ -338,72 +344,12 @@ lea rsi, SECOND_HALF(0)
 _end:
 	print line, 1
 	exit_
+
 _err:	    
 	print err_msg, err_msglen
     	print line, 1
     	exit_
 
-
-
-; Función substring_buf
-; Parámetros:
-;   rdi - cadena de entrada
-;   rsi - índice inferior
-;   rdx - índice superior
-;   rcx - buffer de salida
-; Retorno:
-;   rax - longitud del substring
-substring_buf:
-    push rbp
-    mov rbp, rsp
-    push rbx
-    push rcx
-    push r12
-
-    ; Validar índices
-    cmp rsi, rdx
-    jge .invalid_range
-    cmp rdx, 0
-    jl .invalid_range
-
-    ; Calcular longitud de la cadena original
-    mov r12, rdi
-    call strlen
-    cmp rdx, rax
-    jg .invalid_range
-
-    ; Calcular longitud del substring
-    mov rax, rdx
-    sub rax, rsi
-
-    ; Copiar el substring
-    mov rbx, rcx        ; rbx = buffer de salida
-    lea rsi, [r12 + rsi] ; rsi = inicio del substring
-    mov rcx, rax        ; rcx = contador
-
-.copy_loop:
-    mov dl, [rsi]
-    mov [rbx], dl
-    inc rsi
-    inc rbx
-    loop .copy_loop
-
-    ; Añadir null-terminator (opcional)
-    mov byte [rbx], 0
-
-    ; Retornar longitud
-    jmp .done
-
-.invalid_range:
-    xor rax, rax        ; Retornar longitud 0 para indicar error
-
-.done:
-    pop r12
-    pop rcx
-    pop rbx
-    mov rsp, rbp
-    pop rbp
-    ret
 
 
 ; Función: clear_buffer
@@ -430,14 +376,13 @@ clr_buffer:
     mov rsp, rbp
     pop rbp
     ret
+	; =================================================
+        ; ALMACENAR DIGITOS DE VERHOEFF Y AUMENTAR CONTADOR
+        ; -llamar despues de generar un digito de verhoeff 
+        ;  en al (covertir el dig a ascii)
+	; =================================================
 
 save_verhoeff:
-	; =================================================
-	; ALMACENAR DIGITOS DE VERHOEFF Y AUMENTAR CONTADOR
-	;
-	; -llamar despues de generar un digito de verhoeff 
-	;  en al (covertir el dig a ascii)
-	; =================================================
 	push rdi
 	push rbx
 	

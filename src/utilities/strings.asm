@@ -184,6 +184,70 @@ concat_strings:
 
     ret
 
+
+
+; Función substring_buf
+; Parámetros:
+;   rdi - cadena de entrada
+;   rsi - índice inferior
+;   rdx - índice superior
+;   rcx - buffer de salida
+; Retorno:
+;   rax - longitud del substring
+global substring_buf
+substring_buf:
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push rcx
+    push r12
+
+    ; Validar índices
+    cmp rsi, rdx
+    jge .invalid_range
+    cmp rdx, 0
+    jl .invalid_range
+
+    ; Calcular longitud de la cadena original
+    mov r12, rdi
+    call strlen
+    cmp rdx, rax
+    jg .invalid_range
+
+    ; Calcular longitud del substring
+    mov rax, rdx
+    sub rax, rsi
+
+    ; Copiar el substring
+    mov rbx, rcx        ; rbx = buffer de salida
+    lea rsi, [r12 + rsi] ; rsi = inicio del substring
+    mov rcx, rax        ; rcx = contador
+
+.copy_loop:
+    mov dl, [rsi]
+    mov [rbx], dl
+    inc rsi
+    inc rbx
+    loop .copy_loop
+
+    ; Añadir null-terminator (opcional)
+    mov byte [rbx], 0
+
+    ; Retornar longitud
+    jmp .substring_done
+
+.invalid_range:
+    xor rax, rax        ; Retornar longitud 0 para indicar error
+
+.substring_done:
+    pop r12
+    pop rcx
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
+
+
 global strcpy
 strcpy:
 	; ==============================================
