@@ -9,13 +9,14 @@ section .data
 	; ================================================================
 	;			DATOS DE FACTURACION
 	; ================================================================
-	data:
+	data:	
+		db	"29040011007",	0		; NUMERO DE AUTORIZACION
 		db 	"1503", 	0		; NUMERO DE FACTURA
 		db 	"4189179011", 	0		; NIT
 		db 	"20070702", 	0		; FECHA
 		db 	"2500", 	0		; MONTO
 	
-	datalen 	equ		4	
+	datalen 	equ		5	
 
 	llave_dosif	db	"9rCB7Sv4X29d)5k7N%3ab89p-3(5[A", 0
 	
@@ -38,6 +39,8 @@ section .data
 	err_msglen	equ	($ - err_msg - 1)
 
 	dig_verhoeff	db	0
+
+	chainlen	db	0
 
 	line 		db	NEWLINE
 	
@@ -62,10 +65,27 @@ section .text
 	extern strlen, str_to_int, strcpy, copy_substring, int_to_string
 
 _start:
-gen_verhoeff:	
-	mov rsi, data
-	mov r8, datalen
 
+call cln_all
+
+gen_verhoeff:
+	lea rdx, SECOND_HALF(0)
+	push rdi
+	
+	mov rsi, data
+	mov rdi, rsi
+	
+	call strlen
+	
+	add rsi, rax
+	add rsi, 1
+
+	mov r8, datalen
+	dec r8
+
+; ===========================
+;	LOOP PRINCIPAL
+; ===========================
 .process_loop:	
 	mov rdi, rsi
 	call strlen
@@ -80,7 +100,10 @@ gen_verhoeff:
 	xor rcx, rcx
 	push r8
 	push rbx
-	
+
+; ===========================
+;      LOOP DE 2 DIGITOS 
+; ===========================	
 .digits_loop:
 	cmp rcx, DIGS_POR_DATO
 	jae .sum
@@ -95,6 +118,7 @@ gen_verhoeff:
 
 	push rcx
 	print dig_verhoeff, 1
+	;print line, 1
 	pop rcx	
 
 	inc rbx
@@ -102,10 +126,49 @@ gen_verhoeff:
 
 	jmp .digits_loop 
 
-.sum:	
+; ===========================
+;     SUMATORIA DE DATOS
+; ===========================
+.sum:
+
+mov rdi, buffer
+call strlen
+
+print line, 1
+ 
+; GUARDAR CADENAS CON DIGITOS ----------------------
+push rsi 
+	mov rdi, rdx
+	;add rdi, rdx 	
+	
+		
+	mov rsi, buffer 
+	call strcpy
+
+	;lea rdi, SECOND_HALF(0)
+	call strlen
+
+	mov rbx, rax
+
+;	mov rdi, buffer
+;	lea rsi, SECOND_HALF(0)
+;	call strcpy
+
+	print msg3, msg3len
+	print line, 1
+	print buffer, rbx
+	print line, 1
+ 
+	add rdx, rax
+	inc rdx
+
+ pop rsi
+
+
 	print line, 1
 	pop rbx
 	pop r8
+	
 	mov rdi, buffer
 	call str_to_int
 
@@ -114,9 +177,13 @@ gen_verhoeff:
 	add rsi, rbx
 	add rsi, 1
 	dec r8
-	
+
+
 	jnz .process_loop
 
+; ===== FIN DE LOOP =====
+	
+	
 	; IMPRIMIR SUMA
 
 	mov rdi, [sum_total]
@@ -134,6 +201,10 @@ gen_verhoeff:
 	mov qword [digit_count], 0 	;INICIAR CONTADOR DE DIGITOS DE VERHOEFF
 	mov rdi, buffer
 	xor rcx, rcx
+
+; ===========================
+;    5 DIGITOS DE VERHOEFF
+; ===========================
 
 .verhoeff_sum_loop:
 	cmp rcx, DIGS_SUMATORIA
@@ -162,13 +233,79 @@ gen_verhoeff:
 	print line, 1
 	call cln_all	
 
+; ===========================
+;    IMPRESION DE CONTROL
+; ===========================
+mov rcx, datalen
+dec rcx
+xor rbx, rbx
+
+lea rsi, SECOND_HALF(0)
+.control_loop:
+	add rsi, rbx
+	mov rdi, buffer
+        call strcpy
+        call strlen
+	
+	mov rbx, rax
+	
+	push rbx
+	push rcx
+	print msg2, msg2len
+        print line, 1
+	print buffer, rbx
+	print line, 1
+	pop rcx
+	pop rbx	
+
+	inc rbx
+	dec rcx
+	jnz .control_loop
+
+print line, 1
+call cln_all
 
 
-mov r8, [digit_count] 
+; ===========================
+;      EXTRAER SUBSTRINGS
+; ===========================
+
+mov r8, datalen
+mov rsi, data
 
 .extract_substrings:
+	push rbx
+	push rdx
+
+	mov rdi, rsi
+
+        call strlen
+	mov rbx, rax
+
+        lea rdi, [buffer]
+        call strcpy
+
+	print buffer, rbx	
+	print line, 1
+	
+	add rsi, rbx
+	add rsi, 1
+	
+	pop rdx
+	pop rbx
+
+	push rsi;-----------------------------------
+	
+
 	mov rdi, llave_dosif
-	mov rcx, buffer
+
+	mov rcx, buffer	
+	add rcx, rax
+
+	push rax
+	
+	mov rsi, rdx
+	xor rax, rax
 
 	mov al, [ver_digs + rbx] 
 	sub al, '0'
@@ -181,34 +318,25 @@ mov r8, [digit_count]
 	call substring_buf
 	pop rdx
 
-	
-
-	mov rsi, rdx
 	inc rbx
 
-	;CONTROL DE DATOS (IMPRIMIR SUBSTRINGS)
+	pop rcx
+	add rax, rcx
+
+	; IMPRESION DE CONTROL
 	push rbx
 	mov rbx, rax
-	print msg3, msg3len 
-	print line, 1
 	print buffer, rbx
+	print line, 1
 	print line, 1
 	pop rbx	
 
-
-	
-
-
-	;CONCATENAR CADENAS 
-	;mov qword SECOND_HALF(0)
-	
+	pop rsi ;---------------------------------
 
 	dec r8
 	jnz .extract_substrings
-		
+	
 _end:
-;	mov rbx, rax
-;	print buffer, rbx
 	print line, 1
 	exit_
 _err:	    
@@ -355,4 +483,3 @@ cln:
 	xor rcx, rcx
 	xor rdx, rdx
 	ret
-

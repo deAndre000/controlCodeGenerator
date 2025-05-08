@@ -36,6 +36,8 @@ strlen:
 
 global str_to_int
 str_to_int:
+    push rdx
+
     xor rax, rax          
     xor rcx, rcx         
     
@@ -64,6 +66,7 @@ str_to_int:
     ret
 
 .done:
+    pop rdx
     ret
 
 ; entero a str ASCII (base 10)
