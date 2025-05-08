@@ -230,7 +230,7 @@ substring_buf:
     inc rbx
     loop .copy_loop
 
-    ; Añadir null-terminator (opcional)
+    ; Añadir null-terminator
     mov byte [rbx], 0
 
     ; Retornar longitud

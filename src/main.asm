@@ -40,24 +40,22 @@ section .data
 
 	dig_verhoeff	db	0
 
-	chainlen	db	0
-
 	line 		db	NEWLINE
 	
 	; ================================================================
 	;		      BUFFERS - CONTENEDORES
 	; ================================================================
 	buffer times 21 dq 	0
-
-	;llave de cifrado 
-
+		
 	sum_total	dq	0
-
+	
+	str_c times 10  dq	0
 	
 
 section .bss
-	ver_digs 	resb 	32
+	ver_digs 	resb 	5
 	digit_count 	resq 	1
+
 
 section .text  	
 	global _start
@@ -199,8 +197,8 @@ push rsi
 	print line, 1
 
 	; GENERAR 5 DIGITOS DE VERHOEFF SOBRE LA SUMA
-
-	mov qword [digit_count], 0 	;INICIAR CONTADOR DE DIGITOS DE VERHOEFF
+	; INICIAR CONTADOR DE DIGITOS DE VERHOEFF
+	mov qword [digit_count], 0 	
 	mov rdi, buffer
 	xor rcx, rcx
 
@@ -213,11 +211,13 @@ push rsi
 	cmp rcx, DIGS_SUMATORIA
 	jae .end_of_loop
 
-	;mov rdi, buffer
+
 	call generateVerhoeff
 	add eax, '0'
 
-	call save_verhoeff		;GUARDAR DIGITO DE VERHOEFF
+
+	; GUARDAR DIGITO DE VERHOEFF
+	call save_verhoeff	
 
 	mov byte [buffer + rbx], al
 	mov byte [buffer + rbx + 1], 0
@@ -290,8 +290,8 @@ lea rsi, SECOND_HALF(0)
 	call strcpy
 
 	add rsi, rax
-	add rsi, 1
-	
+	inc rsi	
+
 	add rax, rcx 
 
 	pop rbx
@@ -325,26 +325,43 @@ lea rsi, SECOND_HALF(0)
 	inc rbx
 
 	pop rcx
-	inc rcx
 	add rcx, rax
 
 	pop rsi 
 
 	dec r8
 	jnz .extract_substrings
+
+	
 	
 ; ======== FIN DE LOOP ======== 
 
+; MOVER CADENA CONCATENADA A MEMORIA
+	mov rsi, buffer
+	lea rdi, [str_c]
+        
+	call strcpy
+	call strlen
+	
+	mov rcx, rax
+
 	;IMPRESION DE CONTROL
-	dec rcx
-	print buffer, rcx
+	print str_c, rcx
 	print line, 1
 
 
+	; ================================================================
+        ;         		       SALIDA
+        ; ================================================================
 _end:
 	print line, 1
 	exit_
 
+
+
+	; ================================================================
+        ;         		SALIDA DE -- ERROR --
+        ; ================================================================
 _err:	    
 	print err_msg, err_msglen
     	print line, 1
@@ -352,25 +369,28 @@ _err:
 
 
 
-; Función: clear_buffer
-; Limpiador buffer
-; args:
-;   RDI = puntero al buffer a limpiar
-;   RSI = tamaño del buffer en bytes
+
+
+	; =================================================
+        ; LIMPIAR BUFFER
+        ; args: 
+        ;   RDI = puntero al buffer a limpiar
+	;   RSI = tamaño del buffer en bytes
+        ; =================================================
 
 clr_buffer:
     push rbp
     mov rbp, rsp
     
     test rdi, rdi
-    jz .done_clr           ; Si el puntero es NULL, salir
+    jz .done_clr           
     test rsi, rsi
-    jz .done_clr           ; Si el tamaño es 0, salir
+    jz .done_clr           
 
     ; Limpiar buffer
-    xor eax, eax       ; RAX = 0
-    mov rcx, rsi       ; Contador = tamaño del buffer
-    rep stosb          ; Almacenar AL (0) en [RDI], incrementando RDI, decrementando RCX hasta 0
+    xor eax, eax      
+    mov rcx, rsi      
+    rep stosb        
 
 .done_clr:
     mov rsp, rbp
